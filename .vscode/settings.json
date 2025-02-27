@@ -1,0 +1,17 @@
+{
+    "editor.defaultFormatter": "ms-python.autopep8",
+    "editor.formatOnSave": true,
+    "flake8.args": [
+        "--max-line-length=120",
+        "--ignore=E402,F841,F401,E302,E305,W503"
+    ],
+    "autopep8.args": ["--max-line-length=120"],
+    "terminal.integrated.shellIntegration.enabled": false,
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.autopep8"
+    },
+    "workbench.colorCustomizations": {
+        "titleBar.activeBackground": "#4841a1",
+        "titleBar.inactiveBackground": "#5a5691",
+    },
+}
