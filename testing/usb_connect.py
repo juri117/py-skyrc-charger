@@ -1,0 +1,34 @@
+# pyusb
+
+import usb.util
+import usb.core
+import sys
+
+# {'id': b'0000:0001', 'tag': b'SkyRC T1000 Maestro','device': "/dev/bus/usb/b'001'/b'011'"}
+
+# Find the USB device
+device = usb.core.find(idVendor=0x0000, idProduct=0x0001)
+num = 2
+i = device[0].interfaces()[num].bInterfaceNumber
+ep = device[0].interfaces()[num].endpoints()[0]
+
+# Set the device configuration
+device.set_configuration()
+
+if device.is_kernel_driver_active(i):
+    try:
+        device.detach_kernel_driver(i)
+    except usb.core.USBError as e:
+        sys.exit(
+            "Could not detatch kernel driver from interface({0}): {1}".format(i, str(e)))
+
+# Read data from the device
+endpoint = device[0][(0, 0)][0]
+
+data = bytes([0x0F, 0x04, 0xFE, 0x00, 0x01, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+print(f"endpoint: {ep.bEndpointAddress}")
+device.write(ep.bEndpointAddress, data)
+
+data = device.read(ep.bEndpointAddress, endpoint.wMaxPacketSize)
+print(f"Received data: {data}")
