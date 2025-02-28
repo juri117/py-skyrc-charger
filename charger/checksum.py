@@ -1,8 +1,10 @@
 
 
 def calc_checksum(data: bytes):
-    # data = raw_data[:-1]
-    data = data[2:-1]
+    """
+    Calculate checksum for a command without checksum byte.
+    """
+    data = data[2:]
     checksum = 0
     for byte in data:
         checksum += byte
@@ -11,19 +13,19 @@ def calc_checksum(data: bytes):
 
 
 def check_checksum(data: bytes):
-    checksum = calc_checksum(data)
+    checksum = calc_checksum(data[:-1])
     return checksum == data[-1]
 
 
 if __name__ == "__main__":
 
     commands = [
-        "0f1605010002000a050ce41068000000000000000000007f",
+        "0f1605010002000a050ce41068000000000000000000007f",  # start
         "0f1605010006000a050ce410680000000000000000000083",
         "0f160501000600c8050ce410680000000000000000000041",
         # "0f03fe01ff06030a050f0a0f0a0000000000000000000050",
         # "0f03fe01ff06000a050ce410680000000000000000000083",
-        "0f2255010100010004596903de001900000ee30ee80ee60ee90ee70ee8000000000100d6",
+        "0f2255010100010004596903de001900000ee30ee80ee60ee90ee70ee8000000000100d6",  # vals
         "0f2255010100010004597103de001900000ee50eea0ee70eea0ee80ee8000000000100e5",
         "0f2255010100010005597403de001900000ee50eea0ee80eea0ee90eea000000000100ed",
         "0f2255010100010006597f03d8001900000ee80eec0ee90eeb0eea0eea000000000100fb",
@@ -39,12 +41,16 @@ if __name__ == "__main__":
         "0f2255010100040012599b03d9001800000eeb0ef00eee0ef00ef00ef000000000010043",
         "0f22550101003e00e35a1403d7001b00000f000f030f020f030f040f0500000000010047",
         "0f22550101013904765b0403d8002000000f280f2c0f2b0f2a0f2b0f2e000000000100c2",
-        "0f2255010101fa07355bf103d8002300000f500f520f570f500f510f5300000000010020"
+        "0f2255010101fa07355bf103d8002300000f500f520f570f500f510f5300000000010020",
+        "0f03fe01ff06000a050ce410680000000000000000000083",  # stop
+        "0f03fe01ff02000a050ce41068000000000000000000007f",
+        "0f03fe01ff06030a050f0a0f0a0000000000000000000050",
+        "0f0355015603000a050ce410680000000000000000000080",  # poll
     ]
 
     for cmd in commands:
         raw_data = bytes.fromhex(cmd)
-        checksum = calc_checksum(raw_data)
+        checksum = calc_checksum(raw_data[:-1])
         print(
             f"Checksum: {raw_data[-1]:02x} =? {checksum:02x}, diff: {raw_data[-1] - checksum} "
             + f"ok: {check_checksum(raw_data)}")
