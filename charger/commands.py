@@ -93,7 +93,7 @@ def parse_data(data):
                 return None
             # print("got vals")
             values = {
-                'unknown_3': data[3],  # ? const 1
+                'port': data[3],  # ? const 1 ?
                 'unknown_4': data[4],  # ? const 1
                 'charge_total': bytes_to_u16(data[5], data[6]) / 1000,  # Ah
                 'time': bytes_to_u16(data[7], data[8]),  # s
