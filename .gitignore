@@ -51,6 +51,7 @@ python*
 **/certs
 config.json
 **/old
+**/*.csv
 
 wireshark
 

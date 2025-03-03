@@ -1,7 +1,7 @@
 
 
 from dataclasses import dataclass
-from checksum import calc_checksum
+from checksum import calc_checksum, check_checksum
 
 # bytes
 SYNC = 0x0f
@@ -86,28 +86,36 @@ def parse_data(data):
         return None
     if data[0] == 0x0f:
         if data[1] == 0x22 and data[2] == 0x55:
+            data = data[0:36]
+            res = check_checksum(data)
+            if not res:
+                print("checksum failed")
+                return None
             # print("got vals")
             values = {
-                # 'test8': data[0],
-                # 'test7': bytes_to_u16(data[1], data[2]) / 1000,
-                # 'test6': bytes_to_u16(data[3], data[4]) / 1000,
-                # 'test5': bytes_to_u16(data[5], data[6]) / 1000,
-                # 'test4': bytes_to_u16(data[7], data[8]) / 1000,
-                'volt_total': bytes_to_u16(data[9], data[10]) / 1000,
-                'current': bytes_to_u16(data[11], data[12]) / 1000,
-                # 'test2': bytes_to_u16(data[13], data[14]) / 1000,
-                # 'test1': bytes_to_u16(data[15], data[16]) / 1000,
-                'volt0': bytes_to_u16(data[17], data[18]) / 1000,
-                'volt1': bytes_to_u16(data[19], data[20]) / 1000,
-                'volt2': bytes_to_u16(data[21], data[22]) / 1000,
-                'volt3': bytes_to_u16(data[23], data[24]) / 1000,
-                'volt4': bytes_to_u16(data[25], data[26]) / 1000,
-                'volt5': bytes_to_u16(data[27], data[28]) / 1000,
-                # 'testa': bytes_to_u16(data[29], data[30]) / 1000,
-                # 'testb': bytes_to_u16(data[31], data[32]) / 1000,
-                # 'testc': bytes_to_u16(data[33], data[34]) / 1000,
-                # 'testd': data[35],
-                # 'volt_total': bytes_to_u16(data[35], data[36]) / 100,
+                'unknown_3': data[3],  # ? const 1
+                'unknown_4': data[4],  # ? const 1
+                'charge_total': bytes_to_u16(data[5], data[6]) / 1000,  # Ah
+                'time': bytes_to_u16(data[7], data[8]),  # s
+                'volt_total': bytes_to_u16(data[9], data[10]) / 1000,  # V
+                'current': bytes_to_u16(data[11], data[12]) / 1000,  # A
+                'unknown_13': data[13],  # ? const 0
+                'system_temp': data[14],  # ? system temperatur C ?
+                'unknown_15': data[15],  # ? const 0
+                'unknown_16': data[16],  # ? const 0
+                'volt0': bytes_to_u16(data[17], data[18]) / 1000,  # V
+                'volt1': bytes_to_u16(data[19], data[20]) / 1000,  # V
+                'volt2': bytes_to_u16(data[21], data[22]) / 1000,  # V
+                'volt3': bytes_to_u16(data[23], data[24]) / 1000,  # V
+                'volt4': bytes_to_u16(data[25], data[26]) / 1000,  # V
+                'volt5': bytes_to_u16(data[27], data[28]) / 1000,  # V
+                'unknown_29': data[29],  # ? const 0
+                'unknown_30': data[30],  # ? const 0
+                'unknown_31': data[31],  # ? const 0
+                'unknown_32': data[32],  # ? const 0
+                'unknown_33': data[33],  # ? const 1
+                'unknown_34': data[34],  # ? const 0
+                # 'checksum': data[35],
             }
             # print(values)
             return values
