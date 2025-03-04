@@ -1,6 +1,18 @@
-import unittest
-from commands import get_cmd_start, Action, get_cmd_poll_vals, get_cmd_stop, Config
 
+
+import unittest
+
+import sys
+import os
+
+if True:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../../")
+
+
+from py_charger.src.commands import get_cmd_start, Action, get_cmd_poll_vals, get_cmd_stop, Config
+
+
+# I compare messages, captured by wireshark, with my generated messages
 
 class TestCommands(unittest.TestCase):
     def test_get_cmd_start(self):

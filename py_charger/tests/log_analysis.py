@@ -1,14 +1,19 @@
 
 
 import csv
-import datetime
 
-from commands import get_cmd_start, Action, get_cmd_poll_vals, get_cmd_stop, Config, parse_data
+import sys
+import os
+
+if True:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../../")
+
+from py_charger.src.commands import parse_data
 
 
 line_count = 0
 out = []
-with open('logs/usb_data_2025-02-27_12-44-46.txt', 'r') as f:
+with open('py_charger/tests/usb_data_2025-02-27_12-44-46.txt', 'r') as f:
     for line in f:
         parts = line.strip().split(':')
         if len(parts) != 2:

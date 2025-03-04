@@ -20,6 +20,9 @@ class Charger:
     def __init__(self, rec_data_callback: Optional[Callable[[Dict], None]] = None):
         self.dev = None
         self.rec_data_callback = rec_data_callback
+        self.read_thread = None
+        self.stop_requested = False
+        self.port_configs = {1: None, 2: None}
 
     def connect_device(self):
         dev = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
@@ -34,17 +37,32 @@ class Charger:
                 sys.exit(
                     "Could not detatch kernel driver from interface({0}): {1}".format(i, str(e)))
         self.dev = dev
+        self.start_read_thread()
 
-        self.read_thread = threading.Thread(target=self._read_data_thread, daemon=True)
-        self.read_thread.start()
+    def start_read_thread(self):
+        if self.read_thread is None:
+            self.stop_requested = False
+            self.read_thread = threading.Thread(target=self._read_data_thread, daemon=True)
+            self.read_thread.start()
 
-    def start(self, config: Config):
+    def stop_read_thread(self):
+        self.stop_requested = True
+        self.read_thread = None
+
+    def start_program(self, config: Config):
+        self.port_configs[config.port] = config
         cmd = get_cmd_start(config)
         self._write_data(cmd)
 
-    def stop(self, config: Config):
+    def stop_program(self, config: Config):
         cmd = get_cmd_stop(config)
         self._write_data(cmd)
+        # self.port_configs[config.port] = None
+
+    def poll_all_vals(self):
+        for config in self.port_configs.values():
+            if config is not None:
+                self.poll_vals(config)
 
     def poll_vals(self, config: Config):
         cmd = get_cmd_poll_vals(config)
@@ -66,7 +84,7 @@ class Charger:
         return None
 
     def _read_data_thread(self):
-        while True:
+        while not self.stop_requested:
             data = self._read_data(64)
             if data is not None and self.rec_data_callback is not None:
                 vals = parse_data(data)
@@ -81,15 +99,17 @@ def rec_data_callback(data):
 if __name__ == "__main__":
     charger = Charger(rec_data_callback)
     charger.connect_device()
+
     conf = Config(1, Action.BALANCE, 2, 1.0, 0.5)
 
     start_time = time.time()
     while time.time() - start_time < 60:
-        charger.poll_vals(conf)
+        # charger.poll_vals(conf)
+        charger.poll_all_vals()
         time.sleep(1.0)
 
     print("START")
-    charger.start(conf)
+    charger.start_program(conf)
 
     start_time = time.time()
     while time.time() - start_time < 600:
@@ -97,4 +117,4 @@ if __name__ == "__main__":
         time.sleep(1.0)
 
     print("STOP")
-    charger.stop(conf)
+    charger.stop_program(conf)

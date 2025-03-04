@@ -1,7 +1,7 @@
 
 
 from dataclasses import dataclass
-from checksum import calc_checksum, check_checksum
+from .checksum import calc_checksum, check_checksum
 
 # bytes
 SYNC = 0x0f
