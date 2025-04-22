@@ -109,27 +109,27 @@ def parse_data(data):
             # print("got vals")
             values = {
                 'port': data[3],  # ? const 1 ?
-                '?_1': data[4],  # ? const 1
+                # '?_1': data[4],  # ? const 1
                 'charge_total': bytes_to_u16(data[5], data[6]) / 1000,  # Ah
                 'time': bytes_to_u16(data[7], data[8]),  # s
                 'volt_total': bytes_to_u16(data[9], data[10]) / 1000,  # V
                 'current': bytes_to_u16(data[11], data[12]) / 1000,  # A
-                '?_2': data[13],  # ? const 0
+                # '?_2': data[13],  # ? const 0
                 'system_temp': data[14],  # ? system temperatur C ?
-                '?_3': data[15],  # ? const 0
-                '?_4': data[16],  # ? const 0
+                # '?_3': data[15],  # ? const 0
+                # '?_4': data[16],  # ? const 0
                 'volt_0': bytes_to_u16(data[17], data[18]) / 1000,  # V
                 'volt_1': bytes_to_u16(data[19], data[20]) / 1000,  # V
                 'volt_2': bytes_to_u16(data[21], data[22]) / 1000,  # V
                 'volt_3': bytes_to_u16(data[23], data[24]) / 1000,  # V
                 'volt_4': bytes_to_u16(data[25], data[26]) / 1000,  # V
                 'volt_5': bytes_to_u16(data[27], data[28]) / 1000,  # V
-                '?_5': data[29],  # ? const 0
-                '?_6': data[30],  # ? const 0
-                '?_7': data[31],  # ? const 0
-                '?_8': data[32],  # ? const 0
-                '?_9': data[33],  # ? const 1
-                '?_10': data[34],  # ? const 0
+                # '?_5': data[29],  # ? const 0
+                # '?_6': data[30],  # ? const 0
+                # '?_7': data[31],  # ? const 0
+                # '?_8': data[32],  # ? const 0
+                # '?_9': data[33],  # ? const 1
+                # '?_10': data[34],  # ? const 0
                 'checksum': data[35],
             }
             # print(values)

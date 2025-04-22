@@ -6,7 +6,7 @@ however chargers working with the original Charge Master software are likely to 
 
 **tested on linux only**, windows should also work, but it is more difficult to setup the usb driver
 
-# setup
+# setup (linux)
 
 ## fix usb permissions
 
@@ -19,26 +19,3 @@ run:
 ```bash
 sudo adduser $USER plugdev
 ```
-
-## setup development environment
-
-### linux
-
-```shell
-python3 -m venv env
-env/bin/python -m pip install --upgrade pip
-env/bin/python -m pip install -r requirements.txt
-```
-
-### windows
-
-```shell
-python -m venv env
-env/Scripts/python -m pip install --upgrade pip
-env/Scripts/python -m pip install -r requirements.txt
-```
-
-
-
-
-

@@ -54,6 +54,9 @@ config.json
 **/*.csv
 
 wireshark
+.pypirc
+dist
+.vscode
 
 # include
 !requirements.txt

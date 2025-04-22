@@ -28,7 +28,7 @@ class Charger:
         self.port_configs = {1: Config(1, Action.BALANCE, 6, 1.0, 0.5),
                              2: Config(2, Action.BALANCE, 6, 1.0, 0.5)}
 
-    def connect_device(self):
+    def connect(self):
         dev = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
         if dev is None:
             raise ValueError('Device not found')

@@ -18,6 +18,8 @@
     "workbench.colorCustomizations": {
         "titleBar.activeBackground": "#4841a1",
         "titleBar.inactiveBackground": "#5a5691",
+        "titleBar.activeForeground": "#ffffff",
+        "titleBar.inactiveForeground": "#ffffff"
     },
     "cSpell.words": [
         "adduser",
