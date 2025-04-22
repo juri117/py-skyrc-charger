@@ -6,6 +6,11 @@
         "--ignore=E402,F841,F401,E302,E305,W503"
     ],
     "autopep8.args": ["--max-line-length=120"],
+    "pylint.args": [
+        "--disable=C0111,W0718,E0606,C0413,C0207",
+        "--max-line-length=120",
+        "--ignored-modules=machine"
+    ],
     "terminal.integrated.shellIntegration.enabled": false,
     "[python]": {
         "editor.defaultFormatter": "ms-python.autopep8"
@@ -14,4 +19,9 @@
         "titleBar.activeBackground": "#4841a1",
         "titleBar.inactiveBackground": "#5a5691",
     },
+    "cSpell.words": [
+        "pyusb",
+        "setuptools",
+        "wireshark"
+    ],
 }
