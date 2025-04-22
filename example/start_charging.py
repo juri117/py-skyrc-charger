@@ -19,8 +19,7 @@ if __name__ == "__main__":
     charger = Charger(rec_data_callback_sample)
     charger.connect_device()
 
-    conf = Config(2, Action.BALANCE, 6, 1.0, 0.5)
-    # charger.start_program(conf)
+    conf = Config(1, Action.BALANCE, 6, 1.0, 0.5)
 
     start_time = time.time()
     while time.time() - start_time < 5:

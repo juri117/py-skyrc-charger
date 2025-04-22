@@ -97,32 +97,3 @@ class Charger:
             else:
                 print("No data")
             time.sleep(0.1)
-
-
-def rec_data_callback_sample(data):
-    print(f"Received data: {data}")
-
-
-if __name__ == "__main__":
-    charger = Charger(rec_data_callback_sample)
-    charger.connect_device()
-
-    conf = Config(1, Action.BALANCE, 6, 1.0, 0.5)
-    charger.start_program(conf)
-
-    start_time = time.time()
-    while time.time() - start_time < 60:
-        # charger.poll_vals(conf)
-        charger.poll_all_vals()
-        time.sleep(1.0)
-
-    print("START")
-    charger.start_program(conf)
-
-    start_time = time.time()
-    while time.time() - start_time < 600:
-        charger.poll_vals(conf)
-        time.sleep(1.0)
-
-    print("STOP")
-    charger.stop_program(conf)
