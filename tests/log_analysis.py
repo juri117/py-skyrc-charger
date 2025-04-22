@@ -8,7 +8,7 @@ if True:  # pylint: disable=W0125
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
 
 
-from src.commands import parse_data
+from py_skyrc_charger.commands import parse_data
 
 
 class TestCommands(unittest.TestCase):
@@ -40,15 +40,15 @@ class TestCommands(unittest.TestCase):
                     continue
                 line_count += 1
         print(f"parsed {line_count} lines")
-        self._write_to_csv(out)
+        # self._write_to_csv(out)
 
     def _write_to_csv(self, out):
         # Write data to CSV
-        with open('log_output.csv', 'w', newline='', encoding='utf-8') as csvfile:
+        with open('log_output.csv', 'w', newline='', encoding='utf-8') as csv_file:
             if len(out) > 0:
                 # Get field names from first result dict
                 fieldnames = list(out[0].keys())
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
 
                 writer.writeheader()
                 writer.writerows(out)

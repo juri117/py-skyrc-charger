@@ -20,8 +20,12 @@
         "titleBar.inactiveBackground": "#5a5691",
     },
     "cSpell.words": [
+        "adduser",
+        "libusb",
+        "plugdev",
         "pyusb",
         "setuptools",
+        "skyrc",
         "wireshark"
     ],
 }
