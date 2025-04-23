@@ -26,3 +26,9 @@ env/bin/python -m pip install --upgrade twine
 env/bin/python -m build
 env/bin/python -m twine upload --repository testpypi dist/*
 ```
+
+## install from test.pypi.org
+
+```shell
+env/bin/python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps py-skyrc-charger --upgrade
+```

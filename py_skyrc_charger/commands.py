@@ -1,4 +1,4 @@
-
+from enum import IntEnum
 
 from dataclasses import dataclass
 from .checksum import calc_checksum, check_checksum
@@ -12,7 +12,7 @@ CMD_POLL_VALS_IDLE = [0x03, 0x5a]
 CMD_POLL_VALS_IDLE_2 = [0x03, 0x5f]
 
 
-class Action:
+class Action(IntEnum):
     IDLE = 99
     IDLE_2 = 100
     BALANCE = 0
@@ -131,7 +131,7 @@ def parse_data(data):
                 # '?_8': data[32],  # ? const 0
                 # '?_9': data[33],  # ? const 1
                 # '?_10': data[34],  # ? const 0
-                'checksum': data[35],
+                # 'checksum': data[35],
             }
             # print(values)
             return values

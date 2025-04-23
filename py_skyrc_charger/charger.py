@@ -24,9 +24,19 @@ class Charger:
         self._rec_data_callback = rec_data_callback
         self.read_thread = None
         self.stop_requested = False
+        self._read_errors = 0
+        self._write_errors = 0
         # init with a basic config otherwise data polling is not working
         self.port_configs = {1: Config(1, Action.BALANCE, 6, 1.0, 0.5),
                              2: Config(2, Action.BALANCE, 6, 1.0, 0.5)}
+
+    @property
+    def read_errors(self):
+        return self._read_errors
+
+    @property
+    def write_errors(self):
+        return self._write_errors
 
     def connect(self):
         # try to find the device and connect to it
@@ -91,19 +101,25 @@ class Charger:
         self._write_data(cmd)
 
     def _write_data(self, data):
+        if self.dev is None:
+            return None
         try:
             # print(f"write: {data.hex()}")
             res = self.dev.write(ENDPOINT_WRITE, data)
             return res
-        except usb.core.USBError as e:
-            print(f"Error: {e}")
-            return None
+        except usb.core.USBError:
+            # print(f"Error: {e}")
+            self._write_errors += 1
+        return None
 
     def _read_data(self, length):
+        if self.dev is None:
+            return None
         try:
             return self.dev.read(ENDPOINT_READ, length, timeout=1000)
-        except usb.core.USBError as e:
-            print(f"Error: {e}")
+        except usb.core.USBError:
+            # print(f"Error: {e}")
+            self._read_errors += 1
         return None
 
     def _read_data_thread(self):
