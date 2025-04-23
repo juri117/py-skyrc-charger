@@ -1,4 +1,4 @@
-from enum import IntEnum
+from enum import Enum
 
 from dataclasses import dataclass
 from .checksum import calc_checksum, check_checksum
@@ -12,12 +12,23 @@ CMD_POLL_VALS_IDLE = [0x03, 0x5a]
 CMD_POLL_VALS_IDLE_2 = [0x03, 0x5f]
 
 
-class Action(IntEnum):
+class Action(Enum):
     IDLE = 99
     IDLE_2 = 100
     BALANCE = 0
     CHARGE = 1
     STORAGE = 3
+    UNKNOWN = 77
+
+    @staticmethod
+    def from_str(label):
+        if label.upper() == 'BALANCE':
+            return Action.BALANCE
+        if label.upper() == 'CHARGE':
+            return Action.CHARGE
+        if label.upper() == 'STORAGE':
+            return Action.STORAGE
+        return Action.UNKNOWN
 
 
 @dataclass
@@ -69,6 +80,9 @@ def _get_cmd(config: Config, cmd: list[int], byte4: int, checksum_add: int):
         cmd = [SYNC] + cmd + [config.port]
         return finalize_cmd(cmd, checksum_add=0)
 
+    if config.action not in [Action.BALANCE, Action.CHARGE, Action.STORAGE]:
+        return None
+
     cur_in = int(config.cur_in * 10)
     cur_out = int(config.cur_out * 10)
 
@@ -78,7 +92,7 @@ def _get_cmd(config: Config, cmd: list[int], byte4: int, checksum_add: int):
     # fix byte4
     byte4 = (byte4 + config.port) % 256
     cmd = [SYNC] + cmd + [
-        config.port, byte4, config.cells, config.action, cur_in, cur_out
+        config.port, byte4, config.cells, config.action.value, cur_in, cur_out
     ] + min_volt_bytes + max_volt_bytes + [
         0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00
