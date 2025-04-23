@@ -11,7 +11,7 @@ exclude = ["docs"]
 
 [project]
 name = "py_skyrc_charger"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
     "pyusb >= 1.3.1",
 ]
