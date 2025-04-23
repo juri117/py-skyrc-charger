@@ -47,7 +47,7 @@ class Config:
 # get cmd
 ####################################
 def get_cmd_start(config: Config):
-    return _get_cmd(config, CMD_START, 0x00, 0)
+    return _get_cmd(config, CMD_START, 0xff, 0)
 
 
 def get_cmd_stop(config: Config):
@@ -59,6 +59,7 @@ def get_cmd_poll_vals(config: Config):
 
 
 def _get_cmd(config: Config, cmd: list[int], byte4: int, checksum_add: int):
+
     if config.action == Action.IDLE:
         cmd = CMD_POLL_VALS_IDLE
         cmd = [SYNC] + cmd + [config.port]
@@ -115,9 +116,9 @@ def parse_data(data):
                 'volt_total': bytes_to_u16(data[9], data[10]) / 1000,  # V
                 'current': bytes_to_u16(data[11], data[12]) / 1000,  # A
                 # '?_2': data[13],  # ? const 0
-                'system_temp': data[14],  # ? system temperatur C ?
-                # '?_3': data[15],  # ? const 0
-                # '?_4': data[16],  # ? const 0
+                'system_temp': data[14],  # ? system temperature in C
+                # '?_3': data[15],  # ? const 0, probably temp port A in C
+                # '?_4': data[16],  # ? const 0, probably temp port B in C
                 'volt_0': bytes_to_u16(data[17], data[18]) / 1000,  # V
                 'volt_1': bytes_to_u16(data[19], data[20]) / 1000,  # V
                 'volt_2': bytes_to_u16(data[21], data[22]) / 1000,  # V
@@ -150,7 +151,7 @@ def u16_to_bytes(val):
 
 
 if __name__ == "__main__":
-    print(get_cmd_poll_vals(Config(1, Action.IDLE, 6, 1.0, 0.5)).hex())
+    # print(get_cmd_poll_vals(Config(1, Action.IDLE, 6, 1.0, 0.5)).hex())
     print(get_cmd_start(Config(1, Action.BALANCE, 6, 1.0, 0.5)).hex())
     print(get_cmd_stop(Config(1, Action.BALANCE, 6, 1.0, 0.5)).hex())
     print(get_cmd_poll_vals(Config(1, Action.BALANCE, 6, 1.0, 0.5)).hex())

@@ -25,9 +25,14 @@
         "adduser",
         "libusb",
         "plugdev",
+        "pycache",
+        "pydevproject",
+        "pypirc",
         "pyusb",
         "setuptools",
         "skyrc",
+        "spyproject",
+        "testpypi",
         "wireshark"
     ],
 }

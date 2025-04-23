@@ -19,7 +19,7 @@ if __name__ == "__main__":
     charger = Charger(rec_data_callback_sample)
     charger.connect()
 
-    conf = Config(1, Action.BALANCE, 6, 1.0, 0.5)
+    conf = Config(2, Action.BALANCE, 6, 1.0, 0.5)
 
     start_time = time.time()
     while time.time() - start_time < 5:
@@ -35,7 +35,7 @@ if __name__ == "__main__":
         time.sleep(1.0)
 
     print("STOP")
-    charger.stop_program(conf)
+    charger.stop_program(conf.port)
 
     start_time = time.time()
     while time.time() - start_time < 5:

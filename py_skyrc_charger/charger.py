@@ -29,6 +29,7 @@ class Charger:
                              2: Config(2, Action.BALANCE, 6, 1.0, 0.5)}
 
     def connect(self):
+        # try to find the device and connect to it
         dev = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
         if dev is None:
             raise ValueError('Device not found')
@@ -41,34 +42,51 @@ class Charger:
                 sys.exit(
                     f"Could not detach kernel driver from interface({i}): {e}")
         self.dev = dev
-        self.start_read_thread()
+        self._start_read_thread()
 
-    def start_read_thread(self):
+    def disconnect(self):
+        # disconnect from the device
+        self._stop_read_thread()
+        try:
+            self.dev.close()
+        except Exception as e:
+            print(f"Error: {e}")
+        self.dev = None
+
+    def _start_read_thread(self):
         if self.read_thread is None:
             self.stop_requested = False
             self.read_thread = threading.Thread(target=self._read_data_thread, daemon=True)
             self.read_thread.start()
 
-    def stop_read_thread(self):
+    def _stop_read_thread(self):
         self.stop_requested = True
         self.read_thread = None
 
     def start_program(self, config: Config):
+        # starts a program on a single port, specified by the config
         self.port_configs[config.port] = config
         cmd = get_cmd_start(config)
         self._write_data(cmd)
 
-    def stop_program(self, config: Config):
-        cmd = get_cmd_stop(config)
-        self._write_data(cmd)
-        # self.port_configs[config.port] = None
+    def stop_program(self, port: int):
+        # stops a program on a single port
+        if port in [1, 2]:
+            config = self.port_configs[port]
+            cmd = get_cmd_stop(config)
+            self._write_data(cmd)
+            # self.port_configs[config.port] = None
+        else:
+            raise ValueError(f"Invalid channel: {port}")
 
     def poll_all_vals(self):
+        # requests all battery values on both channels
         for config in self.port_configs.values():
             if config is not None:
                 self.poll_vals(config)
 
     def poll_vals(self, config: Config):
+        # requests battery values on a single port, specified by the config
         cmd = get_cmd_poll_vals(config)
         self._write_data(cmd)
 

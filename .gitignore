@@ -10,7 +10,6 @@ downloads
 */.idea
 **/.DS_Store
 trash
-dataOut*
 **/BAK*
 **/*.pyc
 **/*.bin
@@ -22,8 +21,6 @@ dataOut*
 **/*.aux
 **/*.log
 **/*.lot
-Aero/OpenVSP
-openMDAO
 **/*.ini
 **/*.exe
 **/*.dll
@@ -31,22 +28,16 @@ openMDAO
 **/*.p3d
 **/*.pem
 **/bin/*
-**/gmsh
 **/su2-windows-latest
 **/construct2d
 **/~*
 **/bin
 **/logs
-.env
-.pyenv
 env
-# .vscode
-*.code-workspace
-**/bash.exe.stackdump
+.vscode
 **/*.zip
 **/tmp
 **/logs
-python*
 **/release
 **/certs
 config.json
@@ -56,7 +47,6 @@ config.json
 wireshark
 .pypirc
 dist
-.vscode
 
 # include
 !requirements.txt
