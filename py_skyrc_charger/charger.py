@@ -127,7 +127,6 @@ class Charger:
             data = self._read_data(64)
             if data is not None and self._rec_data_callback is not None:
                 vals = parse_data(data)
-                self._rec_data_callback(vals)
-            else:
-                print("No data")
+                if vals is not None:
+                    self._rec_data_callback(vals)
             time.sleep(0.1)
