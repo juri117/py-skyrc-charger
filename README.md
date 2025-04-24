@@ -14,6 +14,8 @@ however chargers working with the original Charge Master software are likely to 
 
 ## fix usb permissions
 
+this might be necessary to run the code without sudo.
+
 create a file `/lib/udev/rules.d/50-skyrc-t1000.rules` with the following content:
 ```bash
 ACTION=="add", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0000", ATTRS{idProduct}=="0001", MODE="660", GROUP="plugdev"

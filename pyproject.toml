@@ -29,5 +29,5 @@ license = "MIT"
 license-files = ["LICENSE"]
 
 [project.urls]
-Homepage = "https://github.com/juri117/py_skyrc_charger"
-Issues = "https://github.com/juri117/py_skyrc_charger/issues"
+Homepage = "https://github.com/juri117/py-skyrc-charger/"
+Issues = "https://github.com/juri117/py-skyrc-charger/issues"
