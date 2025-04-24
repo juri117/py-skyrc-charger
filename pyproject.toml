@@ -18,7 +18,7 @@ dependencies = [
 authors = [
   { name="Juri Bieler", email="juribieler@gmail.com" },
 ]
-description = "take control of the SkyRC charger"
+description = "take control of a SkyRC charger via USB"
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [

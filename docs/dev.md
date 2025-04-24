@@ -22,9 +22,12 @@ env/Scripts/python -m pip install -r requirements.txt
 # install requirements
 env/bin/python -m pip install --upgrade twine
 
-# build and deploy
+# build
 env/bin/python -m build
+# deploy to test.pypi.org
 env/bin/python -m twine upload --repository testpypi dist/*
+# deploy to pypi.org
+env/bin/python -m twine upload dist/*
 ```
 
 ## install from test.pypi.org
