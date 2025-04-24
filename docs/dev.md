@@ -25,7 +25,7 @@ env/bin/python -m pip install --upgrade twine
 # build
 env/bin/python -m build
 # deploy to test.pypi.org
-env/bin/python -m twine upload --repository testpypi dist/*
+env/bin/python -m twine upload --repository testpypi dist/* --verbose
 # deploy to pypi.org
 env/bin/python -m twine upload dist/*
 ```
