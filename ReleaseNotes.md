@@ -1,5 +1,8 @@
 
+## 0.0.6
 
+**new features**
+* support multiple chargers, connected to one pc
 
 ## 0.0.5
 

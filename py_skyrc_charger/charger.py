@@ -19,9 +19,11 @@ ENDPOINT_READ = 0x81
 
 
 class Charger:
-    def __init__(self, rec_data_callback: Optional[Callable[[Dict], None]] = None):
+    def __init__(self, rec_data_callback: Optional[Callable[[Dict], None]] = None,
+                 device_index: int = 0):
         self.dev = None
         self._rec_data_callback = rec_data_callback
+        self._device_index = device_index
         self.read_thread = None
         self.stop_requested = False
         self._read_errors = 0
@@ -40,19 +42,20 @@ class Charger:
 
     def connect(self):
         # try to find the device and connect to it
-        dev = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
-        if dev is None:
+        dev = list(usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID, find_all=True))
+        if dev is None or dev == []:
             raise ValueError('Device not found')
-        print(dev[0].interfaces())
-        i = dev[0].interfaces()[0].bInterfaceNumber
-        if dev.is_kernel_driver_active(i):
-            try:
-                dev.detach_kernel_driver(i)
-            except usb.core.USBError as e:
-                sys.exit(
-                    f"Could not detach kernel driver from interface({i}): {e}")
-        self.dev = dev
-        self._start_read_thread()
+        # print(dev[0].interfaces())
+        if len(dev) > self._device_index:
+            i = dev[self._device_index][0].interfaces()[0].bInterfaceNumber
+            if dev[self._device_index].is_kernel_driver_active(i):
+                try:
+                    dev[self._device_index].detach_kernel_driver(i)
+                except usb.core.USBError as e:
+                    sys.exit(
+                        f"Could not detach kernel driver from interface({i}): {e}")
+            self.dev = dev[self._device_index]
+            self._start_read_thread()
 
     def disconnect(self):
         # disconnect from the device
@@ -128,5 +131,6 @@ class Charger:
             if data is not None and self._rec_data_callback is not None:
                 vals = parse_data(data)
                 if vals is not None:
+                    vals["device_index"] = self._device_index
                     self._rec_data_callback(vals)
             time.sleep(0.1)
