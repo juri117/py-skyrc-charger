@@ -113,8 +113,12 @@ def _get_cmd_with_config(config: Config, cmd: list[int], byte4: int, checksum_ad
     if config.action not in [Action.BALANCE, Action.CHARGE, Action.DISCHARGE, Action.STORAGE, Action.PARALLEL]:
         return None
 
-    cur_in = int(config.cur_in * 10)
-    cur_out = int(config.cur_out * 10)
+    cur_charge_overflow_byte = 0x00
+    cur_charge = int(config.cur_in * 10)
+    if cur_charge >= 256:
+        cur_charge -= 256
+        cur_charge_overflow_byte = 0x01
+    cur_discharge = int(config.cur_out * 10)
 
     min_volt_bytes = u16_to_bytes(int(config.min_volt * 1000))
     max_volt_bytes = u16_to_bytes(int(config.max_volt * 1000))
@@ -122,10 +126,10 @@ def _get_cmd_with_config(config: Config, cmd: list[int], byte4: int, checksum_ad
     # fix byte4
     byte4 = (byte4 + config.port) % 256
     payload = [
-        config.port, byte4, config.cells, config.action.value, cur_in, cur_out
+        config.port, byte4, config.cells, config.action.value, cur_charge, cur_discharge
     ] + min_volt_bytes + max_volt_bytes + [
         0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+        cur_charge_overflow_byte, 0x00, 0x00, 0x00, 0x00, 0x00
     ]
     return _get_cmd(cmd, payload, checksum_add=checksum_add)
 

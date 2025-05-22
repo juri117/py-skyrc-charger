@@ -1,4 +1,9 @@
 
+## 0.0.7
+
+**bug-fixes**
+* found overflow bit hack if charging current is greater than 25.5A
+
 ## 0.0.6
 
 **new features**
