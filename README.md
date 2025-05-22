@@ -2,6 +2,7 @@
 # py skyrc charger
 
 this package allows to interface with skyrc chargers using the usb-connection as a more flexible replacement for the *Charge Master* software.
+This library was created by reverse engineering the protocol and does not support the complete set of functions yet.
 
 ## supported devices
 
