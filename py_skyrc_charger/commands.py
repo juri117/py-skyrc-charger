@@ -3,13 +3,29 @@ from enum import Enum
 from dataclasses import dataclass
 from .checksum import calc_checksum, check_checksum
 
+# command structure
+# sync byte: 0x0f
+# command, 2 bytes
+# payload, n bytes
+# checksum, 1 byte
+
 # bytes
 SYNC = 0x0f
 CMD_START = [0x16, 0x05]
 CMD_STOP = [0x03, 0xfe]
 CMD_POLL_VALS = [0x03, 0x55]
-CMD_POLL_VALS_IDLE = [0x03, 0x5a]
-CMD_POLL_VALS_IDLE_2 = [0x03, 0x5f]
+CMD_GET_SETTINGS = [0x03, 0x5a]  # is requested periodically when idle
+CMD_GET_VERSION = [0x03, 0x57]  # is requested once at startup
+CMD_UNKNOWN0 = [0x03, 0x5f]  # is requested periodically when idle
+CMD_GET_UNKNOWN1 = [0x03, 0x66]  # is sent on startup, but has no response
+
+
+CMD_REPLY_VALS = [0x22, 0x55]
+CMD_REPLY_VERSION = [0x14, 0x57]
+CHD_REPLY_START_ACK = [0x04, 0x05]
+CHD_REPLY_STOP_ACK = [0x04, 0xfe]
+CMD_REPLY_SETTINGS = [0x25, 0x5a]
+CMD_REPLY_UNKNOWN0 = [0x0c, 0x5f]  # regular when not charging
 
 
 class Action(Enum):
@@ -17,7 +33,9 @@ class Action(Enum):
     IDLE_2 = 100
     BALANCE = 0
     CHARGE = 1
+    DISCHARGE = 2
     STORAGE = 3
+    PARALLEL = 6
     UNKNOWN = 77
 
     @staticmethod
@@ -26,8 +44,12 @@ class Action(Enum):
             return Action.BALANCE
         if label.upper() == 'CHARGE':
             return Action.CHARGE
+        if label.upper() == 'DISCHARGE':
+            return Action.DISCHARGE
         if label.upper() == 'STORAGE':
             return Action.STORAGE
+        if label.upper() == 'PARALLEL':
+            return Action.PARALLEL
         return Action.UNKNOWN
 
 
@@ -57,30 +79,38 @@ class Config:
 ####################################
 # get cmd
 ####################################
+
 def get_cmd_start(config: Config):
-    return _get_cmd(config, CMD_START, 0xff, 0)
+    return _get_cmd_with_config(config, CMD_START, 0xff, 0)
 
 
 def get_cmd_stop(config: Config):
-    return _get_cmd(config, CMD_STOP, 0xfe, 8)
+    return _get_cmd_with_config(config, CMD_STOP, 0xfe, 8)
 
 
 def get_cmd_poll_vals(config: Config):
-    return _get_cmd(config, CMD_POLL_VALS, 0x55, 90)
+    return _get_cmd_with_config(config, CMD_POLL_VALS, 0x55, 90)
 
 
-def _get_cmd(config: Config, cmd: list[int], byte4: int, checksum_add: int):
+def get_cmd_get_version():
+    return _get_cmd(CMD_GET_VERSION, [0x01], 0)
 
+
+def get_cmd_get_settings():
+    return _get_cmd(CMD_GET_SETTINGS, [0x01], 0)
+
+
+def _get_cmd_with_config(config: Config, cmd: list[int], byte4: int, checksum_add: int):
     if config.action == Action.IDLE:
-        cmd = CMD_POLL_VALS_IDLE
+        cmd = CMD_GET_SETTINGS
         cmd = [SYNC] + cmd + [config.port]
         return finalize_cmd(cmd, checksum_add=0)
     if config.action == Action.IDLE_2:
-        cmd = CMD_POLL_VALS_IDLE_2
+        cmd = CMD_UNKNOWN0
         cmd = [SYNC] + cmd + [config.port]
         return finalize_cmd(cmd, checksum_add=0)
 
-    if config.action not in [Action.BALANCE, Action.CHARGE, Action.STORAGE]:
+    if config.action not in [Action.BALANCE, Action.CHARGE, Action.DISCHARGE, Action.STORAGE, Action.PARALLEL]:
         return None
 
     cur_in = int(config.cur_in * 10)
@@ -91,12 +121,17 @@ def _get_cmd(config: Config, cmd: list[int], byte4: int, checksum_add: int):
 
     # fix byte4
     byte4 = (byte4 + config.port) % 256
-    cmd = [SYNC] + cmd + [
+    payload = [
         config.port, byte4, config.cells, config.action.value, cur_in, cur_out
     ] + min_volt_bytes + max_volt_bytes + [
         0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     ]
+    return _get_cmd(cmd, payload, checksum_add=checksum_add)
+
+
+def _get_cmd(cmd: list[int], payload: list[int], checksum_add: int):
+    cmd = [SYNC] + cmd + payload
     return finalize_cmd(cmd, checksum_add=checksum_add)
 
 
@@ -114,8 +149,10 @@ def finalize_cmd(cmd: list[int], checksum_add: int = 0) -> bytes:
 def parse_data(data):
     if len(data) <= 0:
         return None
-    if data[0] == 0x0f:
-        if data[1] == 0x22 and data[2] == 0x55:
+    if data[0] == SYNC:
+        cmd_bytes = list(data[1:3])
+        if cmd_bytes == CMD_REPLY_VALS:
+            # battery values
             data = data[0:36]
             res = check_checksum(data)
             if not res:
@@ -123,7 +160,7 @@ def parse_data(data):
                 return None
             # print("got vals")
             values = {
-                'port': data[3],  # ? const 1 ?
+                'port': data[3],
                 # '?_1': data[4],  # ? const 1
                 'charge_total': bytes_to_u16(data[5], data[6]) / 1000,  # Ah
                 'time': bytes_to_u16(data[7], data[8]),  # s
@@ -149,6 +186,40 @@ def parse_data(data):
             }
             # print(values)
             return values
+        if cmd_bytes == CMD_REPLY_VERSION:
+            # VERSION
+            # "".join("{:02x}".format(x) for x in data)
+            data = data[0:36]
+            res = check_checksum(data)
+            # print(f"checksum: {calc_checksum(data[:-1])}, expected: {data[-1]}")
+            # if not res:
+            #    print("checksum failed")
+            #    return None
+            values = {
+                'sn': ''.join(f'{x:02x}' for x in data[5:21]),
+                'version': f'{data[16]}.{data[17]}'
+            }
+            return values
+        if cmd_bytes == CHD_REPLY_START_ACK:
+            pass
+        if cmd_bytes == CHD_REPLY_STOP_ACK:
+            pass
+        if cmd_bytes == CMD_REPLY_SETTINGS:
+            data = data[0:39]
+            values = {
+                'charge_discharge_pause': data[4],  # min
+                'time_limit': bytes_to_u16(data[6], data[7]),  # min
+                'cap_limit': bytes_to_u16(data[9], data[10]),  # mAh
+                'key_buzzer': data[11],  # 0: off, 1: on
+                'system_buzzer': data[12],  # 0: off, 1: on
+                'low_dc_input_cut_off': bytes_to_u16(data[13], data[14]) / 1000,  # V
+                'temp_limit': data[17],  # C
+            }
+            return values
+        if cmd_bytes == CMD_REPLY_UNKNOWN0:
+            return None
+        else:
+            print(f"unknown reply: {data[1]:02x} {data[2]:02x}")
     return None
 
 

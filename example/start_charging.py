@@ -16,8 +16,17 @@ def rec_data_callback_sample(data):
 
 
 if __name__ == "__main__":
-    charger = Charger(rec_data_callback_sample)
+    charger = Charger(rec_data_callback_sample, device_index=0)
     charger.connect()
+
+    time.sleep(1.0)
+
+    print("read version")
+    charger.poll_version()
+    time.sleep(0.2)
+    print("read settings")
+    charger.poll_settings()
+    time.sleep(0.2)
 
     conf = Config(2, Action.BALANCE, 6, 1.0, 0.5)
 

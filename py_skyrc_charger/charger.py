@@ -8,7 +8,9 @@ import usb.util
 import usb.backend.libusb1
 
 
-from .commands import Config, Action, get_cmd_start, get_cmd_stop, get_cmd_poll_vals, parse_data
+from .commands import (Config, Action,
+                       get_cmd_start, get_cmd_stop, get_cmd_poll_vals,
+                       parse_data, get_cmd_get_version, get_cmd_get_settings)
 
 
 VENDOR_ID = 0x0000
@@ -43,7 +45,7 @@ class Charger:
     def connect(self):
         # try to find the device and connect to it
         dev = list(usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID, find_all=True))
-        if dev is None or dev == []:
+        if not dev:
             raise ValueError('Device not found')
         # print(dev[0].interfaces())
         if len(dev) > self._device_index:
@@ -55,7 +57,10 @@ class Charger:
                     sys.exit(
                         f"Could not detach kernel driver from interface({i}): {e}")
             self.dev = dev[self._device_index]
+            # print(f"serial: {self.dev.serial_number}")
             self._start_read_thread()
+        else:
+            raise ValueError('Device index out of range')
 
     def disconnect(self):
         # disconnect from the device
@@ -101,6 +106,14 @@ class Charger:
     def poll_vals(self, config: Config):
         # requests battery values on a single port, specified by the config
         cmd = get_cmd_poll_vals(config)
+        self._write_data(cmd)
+
+    def poll_version(self):
+        cmd = get_cmd_get_version()
+        self._write_data(cmd)
+
+    def poll_settings(self):
+        cmd = get_cmd_get_settings()
         self._write_data(cmd)
 
     def _write_data(self, data):

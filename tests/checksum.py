@@ -2,7 +2,6 @@ import unittest
 
 import sys
 import os
-import csv
 
 if True:  # pylint: disable=W0125
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")

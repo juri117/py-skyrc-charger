@@ -3,6 +3,9 @@
 
 **new features**
 * support multiple chargers, connected to one pc
+* add support for modes: discharge, parallel
+* add command to receive firmware version
+* add command to receive device settings
 
 ## 0.0.5
 
