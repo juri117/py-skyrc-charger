@@ -199,7 +199,6 @@ def parse_data(data):
             else:
                 status = f"unknown: {data[4]}"
             values = {
-                'cmd': cmd_name,
                 'port': data[3],
                 'status': status,
                 'charge_total': bytes_to_u16(data[5], data[6]) / 1000,  # Ah
@@ -234,21 +233,18 @@ def parse_data(data):
             #    print("checksum failed")
             #    return None
             values = {
-                'cmd': cmd_name,
                 'sn': ''.join(f'{x:02x}' for x in data[5:21]),
                 'version': f'{data[16]}.{data[17]}'
             }
             return ChargerResponse(data=values, command=cmd_name)
         if cmd_bytes == CHD_REPLY_START_ACK:
             values = {
-                'cmd': cmd_name,
                 # '?_3': data[3],  # const 0?
                 'res': data[4]  # 1: ok, 0: error
             }
             return ChargerResponse(data=values, command=cmd_name)
         if cmd_bytes == CHD_REPLY_STOP_ACK:
             values = {
-                'cmd': cmd_name,
                 # '?_3': data[3],  # const 0?
                 'res': data[4]  # 1: ok, 0: error
             }
@@ -256,7 +252,6 @@ def parse_data(data):
         if cmd_bytes == CMD_REPLY_SETTINGS:
             data = data[0:39]
             values = {
-                'cmd': cmd_name,
                 # '?_3': data[3],
                 'charge_discharge_pause': data[4],  # min
                 'time_limit_enable': data[5],  # 0: off, 1: on

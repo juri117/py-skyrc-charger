@@ -1,18 +1,22 @@
-import sys
-import os
+
 import time
 
 
 if True:  # pylint: disable=W0125
+    import sys
+    import os
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
 
-# from src.charger import Charger, Config, Action
-
-from py_skyrc_charger import Charger, Config, Action
+from py_skyrc_charger import Charger, Config, Action, ChargerResponse
 
 
-def rec_data_callback_sample(data):
-    print(f"out: {data}")
+def rec_data_callback_sample(data: ChargerResponse):
+    print("---")
+    print(f"got cmd: {data.command}")
+    if data.is_error:
+        print(f"error: {data.error_str}")
+    else:
+        print(f"got data: {data.data}")
 
 
 if __name__ == "__main__":
@@ -21,15 +25,22 @@ if __name__ == "__main__":
 
     time.sleep(1.0)
 
-    print("read version")
+    print("read version...")
     charger.poll_version()
     time.sleep(0.2)
-    print("read settings")
+
+    print("read settings...")
     charger.poll_settings()
     time.sleep(0.2)
 
-    conf = Config(1, Action.CHARGE, 3, 0.1, 0.5)
+    # configure charge program
+    conf = Config(port=1,
+                  action=Action.BALANCE,
+                  cells=3,
+                  cur_in=0.1,
+                  cur_out=0.5)
 
+    # read values in idle
     start_time = time.time()
     while time.time() - start_time < 5:
         charger.poll_all_vals()
@@ -38,6 +49,7 @@ if __name__ == "__main__":
     print("START")
     charger.start_program(conf)
 
+    # read values while charging
     start_time = time.time()
     while time.time() - start_time < 10:
         charger.poll_all_vals()
@@ -46,6 +58,7 @@ if __name__ == "__main__":
     print("STOP")
     charger.stop_program(conf.port)
 
+    # read values in idle
     start_time = time.time()
     while time.time() - start_time < 10:
         charger.poll_all_vals()

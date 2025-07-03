@@ -1,4 +1,12 @@
 
+## 0.0.9
+
+**new features**
+* add sample code to readme
+
+**bug-fixes**
+* remove redundant cmd field from parsed data
+
 ## 0.0.8
 
 **new features**
