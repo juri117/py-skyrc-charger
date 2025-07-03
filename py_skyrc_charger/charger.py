@@ -10,7 +10,8 @@ import usb.backend.libusb1
 
 from .commands import (Config, Action,
                        get_cmd_start, get_cmd_stop, get_cmd_poll_vals,
-                       parse_data, get_cmd_get_version, get_cmd_get_settings)
+                       parse_data, get_cmd_get_version, get_cmd_get_settings,
+                       ChargerResponse)
 
 
 VENDOR_ID = 0x0000
@@ -21,7 +22,7 @@ ENDPOINT_READ = 0x81
 
 
 class Charger:
-    def __init__(self, rec_data_callback: Optional[Callable[[Dict], None]] = None,
+    def __init__(self, rec_data_callback: Optional[Callable[[ChargerResponse], None]] = None,
                  device_index: int = 0):
         self.dev = None
         self._rec_data_callback = rec_data_callback
@@ -143,7 +144,8 @@ class Charger:
             data = self._read_data(64)
             if data is not None and self._rec_data_callback is not None:
                 vals = parse_data(data)
-                if vals is not None:
-                    vals["device_index"] = self._device_index
-                    self._rec_data_callback(vals)
+                if vals.data is not None:
+                    # vals.data["device_index"] = self._device_index
+                    vals.device_index = self._device_index
+                self._rec_data_callback(vals)
             time.sleep(0.1)

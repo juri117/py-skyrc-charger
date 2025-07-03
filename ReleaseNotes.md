@@ -1,4 +1,10 @@
 
+## 0.0.8
+
+**new features**
+* wrap parsed data in data-class with error state/str, command-name and data
+* add enable-values to setting parser
+
 ## 0.0.7
 
 **bug-fixes**

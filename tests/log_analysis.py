@@ -31,10 +31,11 @@ class TestCommands(unittest.TestCase):
                     data = bytes.fromhex(hex_data)
                     result = parse_data(data)
                     self.assertIsNotNone(result)
+                    self.assertEqual(result.is_error, False)
                     if result:
-                        result['time'] = time_str
+                        result.data['time'] = time_str
                         # if line_count % 100 == 0:
-                        out.append(result)
+                        out.append(result.data)
                         # print(f"{parts[0]}: {result}")
                 except ValueError:
                     continue

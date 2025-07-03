@@ -12,7 +12,7 @@ from py_skyrc_charger import Charger, Config, Action
 
 
 def rec_data_callback_sample(data):
-    print(f"Received data: {data}")
+    print(f"out: {data}")
 
 
 if __name__ == "__main__":
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     charger.poll_settings()
     time.sleep(0.2)
 
-    conf = Config(2, Action.BALANCE, 6, 1.0, 0.5)
+    conf = Config(1, Action.CHARGE, 3, 0.1, 0.5)
 
     start_time = time.time()
     while time.time() - start_time < 5:
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     charger.start_program(conf)
 
     start_time = time.time()
-    while time.time() - start_time < 5:
+    while time.time() - start_time < 10:
         charger.poll_all_vals()
         time.sleep(1.0)
 
@@ -47,6 +47,6 @@ if __name__ == "__main__":
     charger.stop_program(conf.port)
 
     start_time = time.time()
-    while time.time() - start_time < 5:
+    while time.time() - start_time < 10:
         charger.poll_all_vals()
         time.sleep(1.0)

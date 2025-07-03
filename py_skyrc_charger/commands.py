@@ -15,6 +15,7 @@ CMD_START = [0x16, 0x05]
 CMD_STOP = [0x03, 0xfe]
 CMD_POLL_VALS = [0x03, 0x55]
 CMD_GET_SETTINGS = [0x03, 0x5a]  # is requested periodically when idle
+CMD_SET_SETTINGS = [0x0f, 0x11]
 CMD_GET_VERSION = [0x03, 0x57]  # is requested once at startup
 CMD_UNKNOWN0 = [0x03, 0x5f]  # is requested periodically when idle
 CMD_GET_UNKNOWN1 = [0x03, 0x66]  # is sent on startup, but has no response
@@ -25,7 +26,25 @@ CMD_REPLY_VERSION = [0x14, 0x57]
 CHD_REPLY_START_ACK = [0x04, 0x05]
 CHD_REPLY_STOP_ACK = [0x04, 0xfe]
 CMD_REPLY_SETTINGS = [0x25, 0x5a]
-CMD_REPLY_UNKNOWN0 = [0x0c, 0x5f]  # regular when not charging
+CMD_REPLY_SET_SETTINGS_ACK = [0x04, 0x11]
+CMD_REPLY_UNKNOWN0 = [0x0c, 0x5f]  # regular when not charging, response to [0x03, 0x5f]
+
+CMD_IN_MAP = {
+    "values": CMD_REPLY_VALS,
+    "version": CMD_REPLY_VERSION,
+    "start_ack": CHD_REPLY_START_ACK,
+    "stop_ack": CHD_REPLY_STOP_ACK,
+    "settings": CMD_REPLY_SETTINGS,
+    "set_settings_ack": CMD_REPLY_SET_SETTINGS_ACK,
+    "unknown0": CMD_REPLY_UNKNOWN0
+}
+
+
+STATUS_MAP = {
+    1: "active",
+    2: "idle",
+    4: "error",
+}
 
 
 class Action(Enum):
@@ -74,6 +93,15 @@ class Config:
             return 3.85
         else:
             return 4.2
+
+
+@dataclass
+class ChargerResponse:
+    is_error: bool = False
+    error_str: str = ""
+    command: str = "unknown"
+    data: dict = None
+    device_index: int = 0
 
 
 ####################################
@@ -152,47 +180,53 @@ def finalize_cmd(cmd: list[int], checksum_add: int = 0) -> bytes:
 
 def parse_data(data):
     if len(data) <= 0:
-        return None
+        return ChargerResponse(is_error=True, error_str="empty data")
     if data[0] == SYNC:
         cmd_bytes = list(data[1:3])
+        if cmd_bytes not in CMD_IN_MAP.values():
+            return ChargerResponse(is_error=True, error_str="unknown command")
+        cmd_name = list(CMD_IN_MAP.keys())[list(CMD_IN_MAP.values()).index(cmd_bytes)]
         if cmd_bytes == CMD_REPLY_VALS:
             # battery values
             data = data[0:36]
             res = check_checksum(data)
             if not res:
-                print("checksum failed")
-                return None
+                # print("checksum failed")
+                return ChargerResponse(is_error=True, error_str="invalid checksum", command=cmd_name)
             # print("got vals")
+            if data[4] in STATUS_MAP:
+                status = STATUS_MAP[data[4]]
+            else:
+                status = f"unknown: {data[4]}"
             values = {
+                'cmd': cmd_name,
                 'port': data[3],
-                # '?_1': data[4],  # ? const 1
+                'status': status,
                 'charge_total': bytes_to_u16(data[5], data[6]) / 1000,  # Ah
                 'time': bytes_to_u16(data[7], data[8]),  # s
                 'volt_total': bytes_to_u16(data[9], data[10]) / 1000,  # V
                 'current': bytes_to_u16(data[11], data[12]) / 1000,  # A
-                # '?_2': data[13],  # ? const 0
+                # '?_13': data[13],  # 0: default, 122: (saw this once on error with wireshark, but not with py)
                 'system_temp': data[14],  # ? system temperature in C
-                # '?_3': data[15],  # ? const 0, probably temp port A in C
-                # '?_4': data[16],  # ? const 0, probably temp port B in C
+                # '?_15': data[15],  # ? const 0, probably temp port A in C
+                # '?_16': data[16],  # ? const 0, probably temp port B in C
                 'volt_0': bytes_to_u16(data[17], data[18]) / 1000,  # V
                 'volt_1': bytes_to_u16(data[19], data[20]) / 1000,  # V
                 'volt_2': bytes_to_u16(data[21], data[22]) / 1000,  # V
                 'volt_3': bytes_to_u16(data[23], data[24]) / 1000,  # V
                 'volt_4': bytes_to_u16(data[25], data[26]) / 1000,  # V
                 'volt_5': bytes_to_u16(data[27], data[28]) / 1000,  # V
-                # '?_5': data[29],  # ? const 0
-                # '?_6': data[30],  # ? const 0
-                # '?_7': data[31],  # ? const 0
-                # '?_8': data[32],  # ? const 0
-                # '?_9': data[33],  # ? const 1
-                # '?_10': data[34],  # ? const 0
-                # 'checksum': data[35],
+                # '?_29': data[29],  # ? const 0
+                # '?_39': data[30],  # ? const 0
+                # '?_31': data[31],  # ? const 0
+                # '?_32': data[32],  # ? const 0
+                # '?_33': data[33],  # ? const 1
+                '?_34': data[34],  # 0: after charge?, 2: default
+                'checksum': data[35],
             }
             # print(values)
-            return values
+            return ChargerResponse(data=values, command=cmd_name)
         if cmd_bytes == CMD_REPLY_VERSION:
-            # VERSION
-            # "".join("{:02x}".format(x) for x in data)
             data = data[0:36]
             res = check_checksum(data)
             # print(f"checksum: {calc_checksum(data[:-1])}, expected: {data[-1]}")
@@ -200,31 +234,49 @@ def parse_data(data):
             #    print("checksum failed")
             #    return None
             values = {
+                'cmd': cmd_name,
                 'sn': ''.join(f'{x:02x}' for x in data[5:21]),
                 'version': f'{data[16]}.{data[17]}'
             }
-            return values
+            return ChargerResponse(data=values, command=cmd_name)
         if cmd_bytes == CHD_REPLY_START_ACK:
-            pass
+            values = {
+                'cmd': cmd_name,
+                # '?_3': data[3],  # const 0?
+                'res': data[4]  # 1: ok, 0: error
+            }
+            return ChargerResponse(data=values, command=cmd_name)
         if cmd_bytes == CHD_REPLY_STOP_ACK:
-            pass
+            values = {
+                'cmd': cmd_name,
+                # '?_3': data[3],  # const 0?
+                'res': data[4]  # 1: ok, 0: error
+            }
+            return ChargerResponse(data=values, command=cmd_name)
         if cmd_bytes == CMD_REPLY_SETTINGS:
             data = data[0:39]
             values = {
+                'cmd': cmd_name,
+                # '?_3': data[3],
                 'charge_discharge_pause': data[4],  # min
+                'time_limit_enable': data[5],  # 0: off, 1: on
                 'time_limit': bytes_to_u16(data[6], data[7]),  # min
+                'cap_limit_enable': data[8],  # 0: off, 1: on
                 'cap_limit': bytes_to_u16(data[9], data[10]),  # mAh
                 'key_buzzer': data[11],  # 0: off, 1: on
                 'system_buzzer': data[12],  # 0: off, 1: on
                 'low_dc_input_cut_off': bytes_to_u16(data[13], data[14]) / 1000,  # V
+                # '?_15': data[15],
+                # '?_16': data[16],
+                # '?_15_16': bytes_to_u16(data[15], data[16]),
                 'temp_limit': data[17],  # C
             }
-            return values
-        if cmd_bytes == CMD_REPLY_UNKNOWN0:
-            return None
+            return ChargerResponse(data=values, command=cmd_name)
+        # if cmd_bytes == CMD_REPLY_UNKNOWN0:
+        #    return Response(is_error=True, error_str="no parser implemented", command=cmd_name)
         else:
-            print(f"unknown reply: {data[1]:02x} {data[2]:02x}")
-    return None
+            return ChargerResponse(is_error=True, error_str="no parser implemented", command=cmd_name)
+    return ChargerResponse(is_error=True, error_str="out of sync")
 
 
 ####################################
@@ -240,7 +292,7 @@ def u16_to_bytes(val):
 
 
 if __name__ == "__main__":
-    # print(get_cmd_poll_vals(Config(1, Action.IDLE, 6, 1.0, 0.5)).hex())
+    print(get_cmd_poll_vals(Config(1, Action.IDLE, 6, 1.0, 0.5)).hex())
     print(get_cmd_start(Config(1, Action.BALANCE, 6, 1.0, 0.5)).hex())
     print(get_cmd_stop(Config(1, Action.BALANCE, 6, 1.0, 0.5)).hex())
     print(get_cmd_poll_vals(Config(1, Action.BALANCE, 6, 1.0, 0.5)).hex())
