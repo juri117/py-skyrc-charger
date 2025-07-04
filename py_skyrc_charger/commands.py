@@ -62,6 +62,7 @@ class CmdIn(str, Enum):
 class Status(IntEnum):
     ACTIVE = 1
     IDLE = 2
+    DONE = 3
     ERROR = 4
     UNKNOWN = 77
 

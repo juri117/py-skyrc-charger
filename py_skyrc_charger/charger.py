@@ -1,4 +1,4 @@
-import sys
+
 import time
 import threading
 from typing import Callable, Optional
@@ -52,11 +52,12 @@ class Charger:
         if len(dev) > self._device_index:
             i = dev[self._device_index][0].interfaces()[0].bInterfaceNumber
             if dev[self._device_index].is_kernel_driver_active(i):
-                try:
-                    dev[self._device_index].detach_kernel_driver(i)
-                except usb.core.USBError as e:
-                    sys.exit(
-                        f"Could not detach kernel driver from interface({i}): {e}")
+                # try:
+                dev[self._device_index].detach_kernel_driver(i)
+                # except usb.core.USBError as e:
+                #    raise Exception(f'Could not detach kernel driver from interface({i}): {e}')
+                #    # sys.exit(
+                #    #    f"Could not detach kernel driver from interface({i}): {e}")
             self.dev = dev[self._device_index]
             # print(f"serial: {self.dev.serial_number}")
             self._start_read_thread()

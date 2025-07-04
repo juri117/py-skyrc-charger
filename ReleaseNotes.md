@@ -1,4 +1,11 @@
 
+## 0.0.12
+
+**new features**
+* add done state to charger
+* do not exit when charger connect fails (raise exception instead)
+
+
 ## 0.0.11
 
 **new features**
