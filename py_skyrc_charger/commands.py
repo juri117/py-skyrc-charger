@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 
 from dataclasses import dataclass
 from .checksum import calc_checksum, check_checksum
@@ -30,7 +30,7 @@ CMD_REPLY_SET_SETTINGS_ACK = [0x04, 0x11]
 CMD_REPLY_UNKNOWN0 = [0x0c, 0x5f]  # regular when not charging, response to [0x03, 0x5f]
 
 
-class CmdIn(Enum):
+class CmdIn(str, Enum):
     VALUES = "values"
     VERSION = "version"
     START_ACK = "start_ack"
@@ -59,7 +59,7 @@ class CmdIn(Enum):
         return CmdIn.UNKNOWN
 
 
-class Status(Enum):
+class Status(IntEnum):
     ACTIVE = 1
     IDLE = 2
     ERROR = 4
@@ -73,7 +73,7 @@ class Status(Enum):
             return Status.UNKNOWN
 
 
-class Ack(Enum):
+class Ack(IntEnum):
     ERROR = 0
     OK = 1
     UNKNOWN = 77
@@ -252,8 +252,8 @@ def parse_data(data):
                 # '?_31': data[31],  # ? const 0
                 # '?_32': data[32],  # ? const 0
                 # '?_33': data[33],  # ? const 1
-                '?_34': data[34],  # 0: after charge?, 2: default
-                'checksum': data[35],
+                # '?_34': data[34],  # 0: after charge?, 2: default
+                # 'checksum': data[35],
             }
             # print(values)
             return ChargerResponse(data=values, command=cmd)
@@ -271,13 +271,13 @@ def parse_data(data):
             return ChargerResponse(data=values, command=cmd)
         if cmd == CmdIn.START_ACK:
             values = {
-                # '?_3': data[3],  # const 0?
+                'port': data[3],
                 'res': Ack.from_value(data[4])  # 1: ok, 0: error
             }
             return ChargerResponse(data=values, command=cmd)
         if cmd == CmdIn.STOP_ACK:
             values = {
-                # '?_3': data[3],  # const 0?
+                'port': data[3],
                 'res': Ack.from_value(data[4])  # 1: ok, 0: error
             }
             return ChargerResponse(data=values, command=cmd)

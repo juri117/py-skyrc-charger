@@ -1,4 +1,15 @@
 
+## 0.0.11
+
+**new features**
+* read port in ack messages
+* use IntEnum to support serialization
+
+**bug-fixes**
+* add imports of enums to init
+* remove test values from value parser
+
+
 ## 0.0.10
 
 **new features**
