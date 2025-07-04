@@ -1,7 +1,7 @@
 import sys
 import time
 import threading
-from typing import Callable, Optional, Dict
+from typing import Callable, Optional
 
 import usb.core
 import usb.util

@@ -1,4 +1,9 @@
 
+## 0.0.10
+
+**new features**
+* use enum for command names, status and ack
+
 ## 0.0.9
 
 **new features**

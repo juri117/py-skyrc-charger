@@ -29,22 +29,61 @@ CMD_REPLY_SETTINGS = [0x25, 0x5a]
 CMD_REPLY_SET_SETTINGS_ACK = [0x04, 0x11]
 CMD_REPLY_UNKNOWN0 = [0x0c, 0x5f]  # regular when not charging, response to [0x03, 0x5f]
 
-CMD_IN_MAP = {
-    "values": CMD_REPLY_VALS,
-    "version": CMD_REPLY_VERSION,
-    "start_ack": CHD_REPLY_START_ACK,
-    "stop_ack": CHD_REPLY_STOP_ACK,
-    "settings": CMD_REPLY_SETTINGS,
-    "set_settings_ack": CMD_REPLY_SET_SETTINGS_ACK,
-    "unknown0": CMD_REPLY_UNKNOWN0
-}
+
+class CmdIn(Enum):
+    VALUES = "values"
+    VERSION = "version"
+    START_ACK = "start_ack"
+    STOP_ACK = "stop_ack"
+    SETTINGS = "settings"
+    SET_SETTINGS_ACK = "set_settings_ack"
+    UNKNOWN0 = "unknown0"
+    UNKNOWN = "unknown"
+
+    @staticmethod
+    def from_bytes(cmd_bytes: list[int]):
+        if cmd_bytes == CMD_REPLY_VALS:
+            return CmdIn.VALUES
+        if cmd_bytes == CMD_REPLY_VERSION:
+            return CmdIn.VERSION
+        if cmd_bytes == CHD_REPLY_START_ACK:
+            return CmdIn.START_ACK
+        if cmd_bytes == CHD_REPLY_STOP_ACK:
+            return CmdIn.STOP_ACK
+        if cmd_bytes == CMD_REPLY_SETTINGS:
+            return CmdIn.SETTINGS
+        if cmd_bytes == CMD_REPLY_SET_SETTINGS_ACK:
+            return CmdIn.SET_SETTINGS_ACK
+        if cmd_bytes == CMD_REPLY_UNKNOWN0:
+            return CmdIn.UNKNOWN0
+        return CmdIn.UNKNOWN
 
 
-STATUS_MAP = {
-    1: "active",
-    2: "idle",
-    4: "error",
-}
+class Status(Enum):
+    ACTIVE = 1
+    IDLE = 2
+    ERROR = 4
+    UNKNOWN = 77
+
+    @classmethod
+    def from_value(cls, value):
+        try:
+            return cls(value)
+        except ValueError:
+            return Status.UNKNOWN
+
+
+class Ack(Enum):
+    ERROR = 0
+    OK = 1
+    UNKNOWN = 77
+
+    @classmethod
+    def from_value(cls, value):
+        try:
+            return cls(value)
+        except ValueError:
+            return Ack.UNKNOWN
 
 
 class Action(Enum):
@@ -99,7 +138,7 @@ class Config:
 class ChargerResponse:
     is_error: bool = False
     error_str: str = ""
-    command: str = "unknown"
+    command: CmdIn = CmdIn.UNKNOWN
     data: dict = None
     device_index: int = 0
 
@@ -183,24 +222,17 @@ def parse_data(data):
         return ChargerResponse(is_error=True, error_str="empty data")
     if data[0] == SYNC:
         cmd_bytes = list(data[1:3])
-        if cmd_bytes not in CMD_IN_MAP.values():
-            return ChargerResponse(is_error=True, error_str="unknown command")
-        cmd_name = list(CMD_IN_MAP.keys())[list(CMD_IN_MAP.values()).index(cmd_bytes)]
-        if cmd_bytes == CMD_REPLY_VALS:
+        cmd = CmdIn.from_bytes(cmd_bytes)
+        if cmd == CmdIn.VALUES:
             # battery values
             data = data[0:36]
             res = check_checksum(data)
             if not res:
                 # print("checksum failed")
-                return ChargerResponse(is_error=True, error_str="invalid checksum", command=cmd_name)
-            # print("got vals")
-            if data[4] in STATUS_MAP:
-                status = STATUS_MAP[data[4]]
-            else:
-                status = f"unknown: {data[4]}"
+                return ChargerResponse(is_error=True, error_str="invalid checksum", command=cmd)
             values = {
                 'port': data[3],
-                'status': status,
+                'status': Status.from_value(data[4]),
                 'charge_total': bytes_to_u16(data[5], data[6]) / 1000,  # Ah
                 'time': bytes_to_u16(data[7], data[8]),  # s
                 'volt_total': bytes_to_u16(data[9], data[10]) / 1000,  # V
@@ -224,8 +256,8 @@ def parse_data(data):
                 'checksum': data[35],
             }
             # print(values)
-            return ChargerResponse(data=values, command=cmd_name)
-        if cmd_bytes == CMD_REPLY_VERSION:
+            return ChargerResponse(data=values, command=cmd)
+        if cmd == CmdIn.VERSION:
             data = data[0:36]
             res = check_checksum(data)
             # print(f"checksum: {calc_checksum(data[:-1])}, expected: {data[-1]}")
@@ -236,20 +268,20 @@ def parse_data(data):
                 'sn': ''.join(f'{x:02x}' for x in data[5:21]),
                 'version': f'{data[16]}.{data[17]}'
             }
-            return ChargerResponse(data=values, command=cmd_name)
-        if cmd_bytes == CHD_REPLY_START_ACK:
+            return ChargerResponse(data=values, command=cmd)
+        if cmd == CmdIn.START_ACK:
             values = {
                 # '?_3': data[3],  # const 0?
-                'res': data[4]  # 1: ok, 0: error
+                'res': Ack.from_value(data[4])  # 1: ok, 0: error
             }
-            return ChargerResponse(data=values, command=cmd_name)
-        if cmd_bytes == CHD_REPLY_STOP_ACK:
+            return ChargerResponse(data=values, command=cmd)
+        if cmd == CmdIn.STOP_ACK:
             values = {
                 # '?_3': data[3],  # const 0?
-                'res': data[4]  # 1: ok, 0: error
+                'res': Ack.from_value(data[4])  # 1: ok, 0: error
             }
-            return ChargerResponse(data=values, command=cmd_name)
-        if cmd_bytes == CMD_REPLY_SETTINGS:
+            return ChargerResponse(data=values, command=cmd)
+        if cmd == CmdIn.SETTINGS:
             data = data[0:39]
             values = {
                 # '?_3': data[3],
@@ -266,11 +298,11 @@ def parse_data(data):
                 # '?_15_16': bytes_to_u16(data[15], data[16]),
                 'temp_limit': data[17],  # C
             }
-            return ChargerResponse(data=values, command=cmd_name)
+            return ChargerResponse(data=values, command=cmd)
         # if cmd_bytes == CMD_REPLY_UNKNOWN0:
-        #    return Response(is_error=True, error_str="no parser implemented", command=cmd_name)
+        #    return Response(is_error=True, error_str="no parser implemented", command=cmd)
         else:
-            return ChargerResponse(is_error=True, error_str="no parser implemented", command=cmd_name)
+            return ChargerResponse(is_error=True, error_str="no parser implemented", command=cmd)
     return ChargerResponse(is_error=True, error_str="out of sync")
 
 
