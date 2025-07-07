@@ -1,4 +1,10 @@
 
+## 0.0.13 ...
+
+**new features**
+* add function get_device_count, to check how many chargers are connected
+
+
 ## 0.0.12
 
 **new features**

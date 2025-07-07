@@ -21,6 +21,11 @@ ENDPOINT_WRITE = 0x02
 ENDPOINT_READ = 0x81
 
 
+def get_device_count():
+    dev = list(usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID, find_all=True))
+    return len(dev)
+
+
 class Charger:
     def __init__(self, rec_data_callback: Optional[Callable[[ChargerResponse], None]] = None,
                  device_index: int = 0):
